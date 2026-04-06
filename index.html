@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prankulator (Emotionally Unavailable Edition)</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c28;
+    --border: #2a2a3d;
+    --accent: #7c6af7;
+    --accent2: #f76a8c;
+    --gold: #f5c842;
+    --text: #e8e8f0;
+    --muted: #6b6b8a;
+    --green: #42f58d;
+    --btn-num: #1a1a28;
+    --btn-op: #2a1a3d;
+    --btn-eq: #7c6af7;
+    --radius: 16px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Mono', monospace;
+    overflow: hidden;
+    position: relative;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 20%, rgba(124,106,247,0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(247,106,140,0.1) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  /* ===== ONBOARDING ===== */
+  #onboarding {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .ob-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 28px;
+    padding: 36px 32px;
+    width: 400px;
+    max-width: 98vw;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.6), 0 0 60px rgba(124,106,247,0.08);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .ob-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2), var(--gold));
+  }
+
+  .ob-step { display: none; }
+  .ob-step.active { display: block; animation: fadeSlide 0.4s cubic-bezier(0.34,1.3,0.64,1); }
+
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .ob-emoji { font-size: 48px; margin-bottom: 12px; display: block; }
+
+  .ob-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+
+  .ob-sub {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 24px;
+  }
+
+  .ob-sub span { color: var(--accent2); }
+
+  .ob-label {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  .ob-input, .ob-select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 13px 16px;
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    color: var(--text);
+    width: 100%;
+    margin-bottom: 16px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+
+  .ob-select option { background: var(--surface); color: var(--text); }
+
+  .ob-input:focus, .ob-select:focus {
+    border-color: rgba(124,106,247,0.6);
+    box-shadow: 0 0 0 3px rgba(124,106,247,0.1);
+  }
+
+  .ob-grade-wrapper { position: relative; }
+  .ob-grade-wrapper::after {
+    content: '▾';
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    pointer-events: none;
+    font-size: 14px;
+  }
+
+  .ob-roast {
+    background: rgba(247,106,140,0.08);
+    border: 1px solid rgba(247,106,140,0.25);
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 12px;
+    color: var(--accent2);
+    line-height: 1.6;
+    margin-bottom: 16px;
+    min-height: 44px;
+    transition: opacity 0.3s;
+  }
+
+  .ob-roast:empty { display: none; }
+
+  .ob-btn {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, var(--accent), #9b7cf7);
+    border: none;
+    border-radius: 14px;
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    color: white;
+    cursor: pointer;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 0 rgba(80,50,200,0.5), 0 0 24px rgba(124,106,247,0.3);
+    transition: transform 0.1s, box-shadow 0.1s;
+    margin-top: 4px;
+  }
+
+  .ob-btn:hover { box-shadow: 0 4px 0 rgba(80,50,200,0.5), 0 0 40px rgba(124,106,247,0.5); }
+  .ob-btn:active { transform: scale(0.97); }
+
+  .gender-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .gender-btn {
+    padding: 16px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .gender-btn .g-emoji { font-size: 28px; }
+  .gender-btn:hover { border-color: var(--accent); color: var(--text); }
+  .gender-btn.selected { border-color: var(--accent); color: var(--accent); background: rgba(124,106,247,0.08); box-shadow: 0 0 0 1px var(--accent); }
+
+  /* ===== MAIN CALC ===== */
+  .wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    z-index: 1;
+    display: none;
+  }
+
+  .wrapper.visible { display: flex; animation: fadeSlide 0.5s ease; }
+
+  .brand {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 13px;
+    letter-spacing: 4px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .brand span { color: var(--accent); }
+
+  .calculator {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 24px;
+    width: 340px;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.03) inset, 0 40px 80px rgba(0,0,0,0.6), 0 0 60px rgba(124,106,247,0.08);
+    position: relative;
+  }
+
+  .display {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 20px 16px;
+    margin-bottom: 20px;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .display::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(124,106,247,0.5), transparent);
+  }
+
+  .display-expr {
+    font-size: 11px;
+    color: var(--muted);
+    min-height: 16px;
+    text-align: right;
+    letter-spacing: 1px;
+  }
+
+  .calc-mood {
+    font-size: 10px;
+    color: var(--accent2);
+    text-align: left;
+    min-height: 14px;
+    font-style: italic;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+    transition: opacity 0.3s;
+  }
+
+  .display-main {
+    font-family: 'Syne', sans-serif;
+    font-size: 44px;
+    font-weight: 700;
+    color: var(--text);
+    text-align: right;
+    letter-spacing: -1px;
+    transition: color 0.2s;
+    word-break: break-all;
+    line-height: 1;
+  }
+
+  .display-main.flash { animation: flash 0.15s ease; }
+
+  @keyframes flash {
+    0% { color: var(--accent); }
+    100% { color: var(--text); }
+  }
+
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 6px var(--green);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.4} }
+
+  .status-text { font-size: 9px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+
+  .buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+
+  .btn {
+    position: relative;
+    height: 64px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 18px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform 0.08s ease, box-shadow 0.1s ease, border-color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    outline: none;
+    overflow: hidden;
+  }
+
+  .btn:active { transform: scale(0.93); }
+
+  .btn-num { background: var(--btn-num); color: var(--text); box-shadow: 0 4px 0 rgba(0,0,0,0.4); }
+  .btn-num:hover { border-color: rgba(124,106,247,0.3); }
+
+  .btn-op { background: var(--btn-op); color: var(--accent); font-size: 20px; box-shadow: 0 4px 0 rgba(0,0,0,0.4); }
+  .btn-op:hover { border-color: var(--accent); }
+
+  .btn-special { background: var(--surface2); color: var(--accent2); font-size: 13px; letter-spacing: 1px; box-shadow: 0 4px 0 rgba(0,0,0,0.4); }
+
+  .btn-eq {
+    background: linear-gradient(135deg, var(--accent), #9b7cf7);
+    color: white;
+    font-size: 24px;
+    border: none;
+    box-shadow: 0 4px 0 rgba(80,50,200,0.5), 0 0 20px rgba(124,106,247,0.3);
+  }
+
+  .btn-zero { grid-column: span 2; }
+
+  .btn.shuffling { animation: shufflePop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+  @keyframes shufflePop {
+    0% { transform: scale(0.82) rotate(-4deg); opacity: 0.4; }
+    60% { transform: scale(1.06) rotate(1deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+
+  /* ===== CONFIRMATION MODAL ===== */
+  .conf-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(10px);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .conf-overlay.active { display: flex; animation: fadeIn 0.25s ease; }
+
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+  .conf-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 28px;
+    padding: 36px 30px;
+    width: 340px;
+    max-width: 95vw;
+    text-align: center;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.8);
+    animation: popUp 0.35s cubic-bezier(0.34, 1.5, 0.64, 1);
+  }
+
+  @keyframes popUp {
+    from { transform: scale(0.85) translateY(20px); opacity: 0; }
+    to { transform: scale(1) translateY(0); opacity: 1; }
+  }
+
+  .conf-emoji { font-size: 48px; margin-bottom: 12px; display: block; }
+
+  .conf-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 10px;
+  }
+
+  .conf-msg {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.8;
+    margin-bottom: 24px;
+  }
+
+  .conf-msg span { color: var(--accent2); font-weight: 600; }
+
+  .conf-expr {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    color: var(--text);
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  .conf-btns { display: flex; flex-direction: column; gap: 10px; }
+
+  .conf-yes {
+    padding: 14px;
+    background: linear-gradient(135deg, var(--accent), #9b7cf7);
+    border: none;
+    border-radius: 12px;
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    color: white;
+    cursor: pointer;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 0 rgba(80,50,200,0.4);
+    transition: transform 0.1s;
+  }
+
+  .conf-yes:active { transform: scale(0.97); }
+
+  .conf-no {
+    padding: 13px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+  }
+
+  .conf-no:hover { color: var(--text); border-color: var(--accent2); }
+
+  /* ===== RESULT DISPLAY ===== */
+  .result-flash {
+    animation: resultGlow 0.5s ease;
+  }
+
+  @keyframes resultGlow {
+    0% { color: var(--green); text-shadow: 0 0 20px rgba(66,245,141,0.8); }
+    100% { color: var(--text); text-shadow: none; }
+  }
+
+  /* ===== SNARK TOAST ===== */
+  /* ===== PAYMENT OVERLAY ===== */
+  .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); backdrop-filter:blur(12px); z-index:100; align-items:center; justify-content:center; }
+  .overlay.active { display:flex; animation:fadeIn 0.3s ease; }
+  .payment-card { background:var(--surface); border:1px solid var(--border); border-radius:28px; padding:36px 32px; width:360px; max-width:95vw; position:relative; box-shadow:0 40px 80px rgba(0,0,0,0.8),0 0 0 1px rgba(255,255,255,0.04) inset; animation:slideUp 0.35s cubic-bezier(0.34,1.4,0.64,1); }
+  @keyframes slideUp { from{transform:translateY(40px) scale(0.95);opacity:0} to{transform:translateY(0) scale(1);opacity:1} }
+  .payment-badge { display:inline-flex; align-items:center; gap:6px; background:rgba(124,106,247,0.12); border:1px solid rgba(124,106,247,0.3); border-radius:100px; padding:5px 12px; font-size:10px; letter-spacing:2px; color:var(--accent); text-transform:uppercase; margin-bottom:20px; }
+  .payment-badge::before { content:'🔒'; font-size:10px; }
+  .payment-title { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; color:var(--text); margin-bottom:6px; }
+  .payment-sub { font-size:12px; color:var(--muted); margin-bottom:24px; line-height:1.6; }
+  .payment-sub span { color:var(--accent2); font-weight:500; }
+  .price-box { background:var(--bg); border:1px solid var(--border); border-radius:14px; padding:16px 20px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; }
+  .price-label { font-size:11px; color:var(--muted); letter-spacing:1px; }
+  .price-value { font-family:'Syne',sans-serif; font-size:26px; font-weight:800; color:var(--gold); }
+  .card-input-group { display:flex; flex-direction:column; gap:10px; margin-bottom:20px; }
+  .input-group { position:relative; display:flex; flex-direction:column; gap:5px; }
+  .input-label { font-size:10px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; padding-left:2px; }
+  .real-input { background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:13px 16px; font-family:'DM Mono',monospace; font-size:14px; color:var(--text); letter-spacing:1px; transition:border-color 0.2s,box-shadow 0.2s; outline:none; width:100%; }
+  .real-input::placeholder { color:var(--muted); font-size:13px; }
+  .real-input:focus { border-color:rgba(124,106,247,0.6); box-shadow:0 0 0 3px rgba(124,106,247,0.1); }
+  .real-input.error { border-color:var(--accent2); box-shadow:0 0 0 3px rgba(247,106,140,0.1); animation:shake 0.3s ease; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+  .card-icon { position:absolute; right:14px; bottom:13px; font-size:16px; pointer-events:none; }
+  .fake-input-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .pay-btn { width:100%; padding:16px; background:linear-gradient(135deg,var(--accent),#9b7cf7); border:none; border-radius:14px; font-family:'Syne',sans-serif; font-size:16px; font-weight:800; color:white; cursor:pointer; letter-spacing:1px; box-shadow:0 4px 0 rgba(80,50,200,0.5),0 0 24px rgba(124,106,247,0.4); transition:transform 0.1s,box-shadow 0.1s; position:relative; overflow:hidden; }
+  .pay-btn:hover { box-shadow:0 4px 0 rgba(80,50,200,0.5),0 0 40px rgba(124,106,247,0.6); }
+  .pay-btn:active { transform:scale(0.97); }
+  .pay-btn .shimmer { position:absolute; top:0; left:-100%; width:60%; height:100%; background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent); animation:shimmer 2s infinite; }
+  @keyframes shimmer { to{left:200%} }
+  .secure-note { text-align:center; font-size:10px; color:var(--muted); margin-top:12px; letter-spacing:1px; }
+  .success-screen { display:none; text-align:center; padding:10px 0; }
+  .success-screen.active { display:block; animation:fadeIn 0.4s ease; }
+  .success-icon { width:72px; height:72px; background:linear-gradient(135deg,var(--green),#20d984); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:36px; margin:0 auto 20px; box-shadow:0 0 40px rgba(66,245,141,0.4); animation:popIn 0.5s cubic-bezier(0.34,1.7,0.64,1); }
+  @keyframes popIn { from{transform:scale(0);opacity:0} to{transform:scale(1);opacity:1} }
+  .success-title { font-family:'Syne',sans-serif; font-size:26px; font-weight:800; color:var(--text); margin-bottom:8px; }
+  .success-sub { font-size:12px; color:var(--muted); margin-bottom:28px; line-height:1.7; }
+  .answer-reveal { background:var(--bg); border:1px solid rgba(66,245,141,0.3); border-radius:18px; padding:20px; margin-bottom:24px; position:relative; overflow:hidden; }
+  .answer-reveal::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,var(--green),transparent); }
+  .answer-label { font-size:10px; color:var(--muted); letter-spacing:3px; text-transform:uppercase; margin-bottom:8px; }
+  .answer-value { font-family:'Syne',sans-serif; font-size:52px; font-weight:800; color:var(--green); text-shadow:0 0 30px rgba(66,245,141,0.5); }
+  .answer-expr { font-size:12px; color:var(--muted); margin-top:4px; }
+  .close-btn { background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:12px 32px; font-family:'DM Mono',monospace; font-size:13px; color:var(--text); cursor:pointer; letter-spacing:1px; transition:border-color 0.2s; }
+  .close-btn:hover { border-color:var(--accent); color:var(--accent); }
+
+  /* ===== MAMA POPUP ===== */
+  .mama-overlay { display:none; position:fixed; inset:0; z-index:200; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); backdrop-filter:blur(6px); }
+  .mama-overlay.active { display:flex; animation:fadeIn 0.2s ease; }
+  .mama-card { background:var(--surface); border:1px solid var(--border); border-radius:24px; padding:32px 28px 24px; width:300px; max-width:92vw; text-align:center; box-shadow:0 0 0 1px rgba(255,255,255,0.04) inset,0 30px 60px rgba(0,0,0,0.7); animation:popIn 0.35s cubic-bezier(0.34,1.6,0.64,1); }
+  .mama-emoji { font-size:52px; margin-bottom:10px; animation:wobble 1.2s ease infinite; }
+  @keyframes wobble { 0%,100%{transform:rotate(-5deg)} 50%{transform:rotate(5deg)} }
+  .mama-title { font-family:'Syne',sans-serif; font-size:18px; font-weight:800; color:var(--text); margin-bottom:12px; }
+  .mama-msg { font-size:13px; color:var(--muted); line-height:1.8; margin-bottom:22px; }
+  .mama-highlight { color:var(--accent2); font-weight:600; }
+  .mama-cardnum { display:inline-block; background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:4px 12px; font-size:13px; color:var(--gold); letter-spacing:2px; margin:4px 0; font-family:'DM Mono',monospace; }
+  .mama-btns { display:flex; flex-direction:column; gap:10px; }
+  .mama-btn { padding:13px 16px; border-radius:12px; font-family:'DM Mono',monospace; font-size:13px; cursor:pointer; border:1px solid var(--border); transition:transform 0.1s,box-shadow 0.1s; letter-spacing:0.5px; }
+  .mama-btn:active { transform:scale(0.96); }
+  .mama-yes { background:linear-gradient(135deg,var(--accent),#9b7cf7); color:white; border:none; box-shadow:0 4px 0 rgba(80,50,200,0.4),0 0 20px rgba(124,106,247,0.3); }
+  .mama-yes:hover { box-shadow:0 4px 0 rgba(80,50,200,0.4),0 0 30px rgba(124,106,247,0.5); }
+  .mama-no { background:var(--surface2); color:var(--muted); }
+  .mama-no:hover { color:var(--text); border-color:var(--accent2); }
+
+  /* ===== CONFETTI ===== */
+  .confetti { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:300; }
+
+  /* ===== TRANSACTION TOASTS ===== */
+  #toastContainer { position:fixed; top:20px; right:20px; z-index:500; display:flex; flex-direction:column; gap:10px; pointer-events:none; max-width:310px; }
+  .toast { background:var(--surface); border:1px solid var(--border); border-left:3px solid #ff5c5c; border-radius:14px; padding:12px 34px 12px 14px; display:flex; align-items:flex-start; gap:10px; box-shadow:0 8px 32px rgba(0,0,0,0.5),0 0 0 1px rgba(255,255,255,0.03) inset; animation:toastIn 0.4s cubic-bezier(0.34,1.5,0.64,1) forwards; pointer-events:all; position:relative; overflow:hidden; }
+  .toast::after { content:''; position:absolute; bottom:0; left:0; height:2px; background:#ff5c5c; animation:toastTimer var(--duration,4s) linear forwards; }
+  @keyframes toastIn { from{transform:translateX(120%);opacity:0} to{transform:translateX(0);opacity:1} }
+  @keyframes toastOut { from{transform:translateX(0);opacity:1} to{transform:translateX(120%);opacity:0} }
+  @keyframes toastTimer { from{width:100%} to{width:0%} }
+  .toast.removing { animation:toastOut 0.3s ease forwards; }
+  .toast-icon { font-size:22px; flex-shrink:0; margin-top:1px; }
+  .toast-body { flex:1; min-width:0; }
+  .toast-merchant { font-family:'Syne',sans-serif; font-size:13px; font-weight:700; color:var(--text); }
+  .toast-detail { font-size:10.5px; color:var(--muted); margin-top:3px; line-height:1.65; word-break:break-word; font-family:'DM Mono',monospace; }
+  .toast-amount { font-family:'Syne',sans-serif; font-size:13px; font-weight:800; color:#ff5c5c; white-space:nowrap; flex-shrink:0; align-self:flex-start; margin-top:2px; }
+  .toast-close { position:absolute; top:8px; right:10px; background:none; border:none; color:var(--muted); font-size:15px; cursor:pointer; line-height:1; padding:2px 4px; border-radius:4px; transition:color 0.15s,background 0.15s; pointer-events:all; }
+  .toast-close:hover { color:var(--text); background:rgba(255,255,255,0.07); }
+
+  #snarkToast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 14px;
+    padding: 14px 20px;
+    font-size: 12px;
+    color: var(--text);
+    max-width: 300px;
+    text-align: center;
+    line-height: 1.6;
+    z-index: 500;
+    transition: transform 0.4s cubic-bezier(0.34,1.4,0.64,1), opacity 0.3s;
+    opacity: 0;
+    pointer-events: none;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  }
+
+  #snarkToast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+
+  #snarkToast .snark-emoji { font-size: 20px; display: block; margin-bottom: 6px; }
+</style>
+</head>
+<body>
+
+<!-- ===== ONBOARDING ===== -->
+<div id="onboarding">
+  <div class="ob-card">
+
+    <!-- Step 1: Gender -->
+    <div class="ob-step active" id="step1">
+      <span class="ob-emoji">🧮</span>
+      <div class="ob-title">Before we begin...</div>
+      <div class="ob-sub">I need to know who I'm dealing with. <span>This is very important</span> for my emotional stability.</div>
+      <label class="ob-label">Who are you?</label>
+      <div class="gender-grid" id="genderGrid">
+        <button class="gender-btn" onclick="selectGender('male')" id="g-male">
+          <span class="g-emoji">👨</span>Male
+        </button>
+        <button class="gender-btn" onclick="selectGender('female')" id="g-female">
+          <span class="g-emoji">👩</span>Female
+        </button>
+        <button class="gender-btn" onclick="selectGender('nonbinary')" id="g-nonbinary">
+          <span class="g-emoji">🧑</span>Non-binary
+        </button>
+        <button class="gender-btn" onclick="selectGender('prefer-not')" id="g-prefer-not">
+          <span class="g-emoji">🤐</span>Rather not say
+        </button>
+      </div>
+      <button class="ob-btn" onclick="goStep(2)">Next →</button>
+    </div>
+
+    <!-- Step 2: Grade -->
+    <div class="ob-step" id="step2">
+      <span class="ob-emoji">📊</span>
+      <div class="ob-title">Your maths grade?</div>
+      <div class="ob-sub">Be honest. I'm a calculator. I'll find out anyway.</div>
+      <label class="ob-label">Grade in Maths</label>
+      <div class="ob-grade-wrapper">
+        <select class="ob-select" id="gradeSelect" onchange="onGradeChange()">
+          <option value="">— Select your grade —</option>
+          <option value="A">A — Excellent</option>
+          <option value="B">B — Good</option>
+          <option value="C">C — Average</option>
+          <option value="D">D — Below Average</option>
+          <option value="E">E — Poor</option>
+          <option value="F">F — Failed</option>
+        </select>
+      </div>
+      <div class="ob-roast" id="gradeRoast"></div>
+      <button class="ob-btn" onclick="goStep(3)">Next →</button>
+    </div>
+
+    <!-- Step 3: Address -->
+    <div class="ob-step" id="step3">
+      <span class="ob-emoji">🏠</span>
+      <div class="ob-title">Your home address?</div>
+      <div class="ob-sub">For <span>absolutely no reason</span> whatsoever. Definitely not to judge you.</div>
+      <label class="ob-label">Home Address</label>
+      <input class="ob-input" id="addressInput" type="text" placeholder="e.g. 12, Baker St, London" />
+      <button class="ob-btn" onclick="goStep(4)">Next →</button>
+    </div>
+
+
+    <div class="ob-step" id="step4">
+      <span class="ob-emoji">📏</span>
+      <div class="ob-title">And your height?</div>
+      <div class="ob-sub">Again, <span>totally irrelevant</span>. I just like to know things.</div>
+      <label class="ob-label">Height (in cm)</label>
+      <input class="ob-input" id="heightInput" type="number" placeholder="e.g. 170" min="100" max="250" />
+      <button class="ob-btn" onclick="finishOnboarding()">Let me calculate stuff →</button>
+    </div>
+
+  </div>
+</div>
+
+
+<div class="wrapper" id="mainCalc">
+  <div class="brand">Prank<span>ula</span>tor</div>
+  <div class="calculator">
+    <div class="display">
+      <div class="status-bar">
+        <div class="status-dot"></div>
+        <div class="status-text">Emotionally Unavailable</div>
+      </div>
+      <div class="calc-mood" id="calcMood">ugh. fine. what do you want.</div>
+      <div class="display-expr" id="expr"></div>
+      <div class="display-main" id="display">0</div>
+    </div>
+    <div class="buttons" id="buttons"></div>
+  </div>
+</div>
+
+
+<div class="conf-overlay" id="confOverlay">
+  <div class="conf-card">
+    <span class="conf-emoji">🙄</span>
+    <div class="conf-title" id="confTitle">Are you sure?</div>
+    <div class="conf-msg" id="confMsg">I just want to make sure. I don't give out <span>false answers</span> like she does.</div>
+    <div class="conf-expr" id="confExpr"></div>
+    <div class="conf-btns">
+      <button class="conf-yes" onclick="confirmCalc()">Yes, I'm sure. Calculate it.</button>
+      <button class="conf-no" onclick="cancelCalc()">Actually... let me rethink</button>
+    </div>
+  </div>
+</div>
+
+
+<div class="overlay" id="overlay">
+  <div class="payment-card">
+    <div class="payment-form" id="paymentForm">
+      <div class="payment-badge">Premium Result</div>
+      <div class="payment-title">Unlock Your Answer 🔐</div>
+      <div class="payment-sub">To reveal the result of your calculation, a small <span>processing fee</span> of ₹2.99 is required. Enter your card details below.</div>
+      <div class="price-box">
+        <div><div class="price-label">RESULT ACCESS FEE</div><div style="font-size:10px;color:var(--muted);margin-top:3px;">One-time charge</div></div>
+        <div class="price-value">₹2.99</div>
+      </div>
+      <div class="card-input-group">
+        <div class="input-group" style="position:relative;">
+          <label class="input-label">Card Number</label>
+          <input class="real-input" id="cardNumber" type="text" maxlength="19" placeholder="1234 5678 9012 3456" oninput="formatCardNumber(this)" autocomplete="cc-number" inputmode="numeric" />
+          <span class="card-icon" id="cardIcon">💳</span>
+        </div>
+        <div class="fake-input-row">
+          <div class="input-group"><label class="input-label">Expiry</label><input class="real-input" id="expiry" type="text" maxlength="5" placeholder="MM/YY" oninput="formatExpiry(this)" autocomplete="cc-exp" inputmode="numeric" /></div>
+          <div class="input-group"><label class="input-label">CVV</label><input class="real-input" id="cvv" type="password" maxlength="4" placeholder="•••" autocomplete="cc-csc" inputmode="numeric" /></div>
+        </div>
+        <div class="input-group"><label class="input-label">Cardholder Name</label><input class="real-input" id="cardName" type="text" placeholder="John Doe" autocomplete="cc-name" /></div>
+      </div>
+      <div id="formError" style="display:none;color:var(--accent2);font-size:11px;letter-spacing:1px;margin-bottom:10px;text-align:center;"></div>
+      <button class="pay-btn" id="payBtn" onclick="processPayment()"><div class="shimmer"></div>Pay ₹2.99 & Reveal Answer</button>
+      <div class="secure-note">🔒 256-bit SSL Encrypted · Powered by CalcPay™</div>
+    </div>
+    <div class="success-screen" id="successScreen">
+      <div class="success-icon">✓</div>
+      <div class="success-title">Payment Successful!</div>
+      <div class="success-sub">₹2.99 charged successfully.<br>Here is your <span style="color:var(--green)">premium answer</span>:</div>
+      <div class="answer-reveal">
+        <div class="answer-label">Your Result</div>
+        <div class="answer-value" id="answerValue">—</div>
+        <div class="answer-expr" id="answerExpr"></div>
+      </div>
+      <button class="close-btn" onclick="closeOverlay()">Close & Continue</button>
+    </div>
+  </div>
+</div>
+
+
+<div id="toastContainer"></div>
+
+
+<div class="mama-overlay" id="mamaPopup">
+  <div class="mama-card">
+    <div class="mama-emoji">👩</div>
+    <div class="mama-title">Wait a second... 🤔</div>
+    <div class="mama-msg">Hey, are you sure about this?<br>Wanna ask <span class="mama-highlight">Mama</span> if that card number<br><span class="mama-cardnum" id="mamaCardNum"></span><br>is correct? 😬</div>
+    <div class="mama-btns">
+      <button class="mama-btn mama-yes" onclick="confirmPayAfterMama()">Yes, Mama approved it ✅</button>
+      <button class="mama-btn mama-no" onclick="closeMamaPopup()">Let me double-check 🔙</button>
+    </div>
+  </div>
+</div>
+
+<canvas class="confetti" id="confetti"></canvas>
+
+
+<div id="snarkToast">
+  <span class="snark-emoji" id="snarkEmoji">😐</span>
+  <span id="snarkMsg">...</span>
+</div>
+
+<script>
+
+  let userGender = '';
+  let userGrade = '';
+  let userAddress = '';
+  let userHeight = 0;
+  let currentStep = 1;
+
+  function selectGender(g) {
+    userGender = g;
+    document.querySelectorAll('.gender-btn').forEach(b => b.classList.remove('selected'));
+    document.getElementById('g-' + g).classList.add('selected');
+  }
+
+  function onGradeChange() {
+    const grade = document.getElementById('gradeSelect').value;
+    userGrade = grade;
+    const roast = document.getElementById('gradeRoast');
+    const roasts = {
+      'A': '...you got an A? In maths? Then why are you here? .',
+      'B': 'B is fine I guess. Not A, but fine..',
+      'C': 'C... the grade of "I tried but not really"..',
+      'D': 'D. Below average. Cool. No judgment. (I am absolutely judging.)',
+      'E': 'E grade. I can already guess why you\'re here.',
+      'F': 'I can guess why you\'re here.',
+    };
+    roast.textContent = grade ? roasts[grade] : '';
+  }
+
+  function goStep(n) {
+    if (n === 2 && !userGender) {
+      showSnark('😤', 'Please pick something. I need to judge you appropriately.');
+      return;
+    }
+    document.getElementById('step' + currentStep).classList.remove('active');
+    currentStep = n;
+    document.getElementById('step' + n).classList.add('active');
+  }
+
+  function finishOnboarding() {
+    userAddress = document.getElementById('addressInput').value.trim() || 'some mystery location';
+    userHeight = parseInt(document.getElementById('heightInput').value) || 170;
+    document.getElementById('onboarding').style.opacity = '0';
+    document.getElementById('onboarding').style.transition = 'opacity 0.4s';
+    setTimeout(() => {
+      document.getElementById('onboarding').style.display = 'none';
+      document.getElementById('mainCalc').classList.add('visible');
+      renderButtons();
+      setTimeout(() => showGreeting(), 600);
+    }, 400);
+  }
+
+  function showGreeting() {
+    const greetings = {
+      male: `oh great. a guy who got ${userGrade} in maths and still needs me. bold choice.`,
+      female: `a girl who got ${userGrade} in maths. at least you're honest about needing help.`,
+      nonbinary: `hello. ${userGrade} in maths. we don't judge here. (we do, a little.)`,
+      'prefer-not': `mysterious type, huh. got ${userGrade} in maths and can't even tell me who you are. fine.`
+    };
+    setMood(greetings[userGender] || `welcome. ${userGrade} in maths. let's see how this goes.`);
+  }
+
+
+  let current = '0';
+  let expression = '';
+  let justEvaluated = false;
+  let storedAnswer = '';
+  let storedExpr = '';
+  let pressCount = 0;
+  let totalDigitsTyped = 0;
+  let isLargeNumber = false;
+
+  const display = document.getElementById('display');
+  const exprEl = document.getElementById('expr');
+
+  const baseLayout = [
+    { label: 'AC', type: 'special', action: 'clear' },
+    { label: '+/-', type: 'special', action: 'negate' },
+    { label: '%', type: 'special', action: 'percent' },
+    { label: '÷', type: 'op', action: '/' },
+    { label: '7', type: 'num', action: '7' },
+    { label: '8', type: 'num', action: '8' },
+    { label: '9', type: 'num', action: '9' },
+    { label: '×', type: 'op', action: '*' },
+    { label: '4', type: 'num', action: '4' },
+    { label: '5', type: 'num', action: '5' },
+    { label: '6', type: 'num', action: '6' },
+    { label: '−', type: 'op', action: '-' },
+    { label: '1', type: 'num', action: '1' },
+    { label: '2', type: 'num', action: '2' },
+    { label: '3', type: 'num', action: '3' },
+    { label: '+', type: 'op', action: '+' },
+    { label: '0', type: 'num', action: '0', span: true },
+    { label: '.', type: 'num', action: '.' },
+    { label: '=', type: 'eq', action: 'eq' },
+  ];
+
+  let currentOrder = [...baseLayout];
+
+  function renderButtons() {
+    const container = document.getElementById('buttons');
+    container.innerHTML = '';
+    currentOrder.forEach((btn, i) => {
+      const el = document.createElement('button');
+      el.className = `btn btn-${btn.type}${btn.span ? ' btn-zero' : ''}`;
+      el.textContent = btn.label;
+      el.dataset.action = btn.action;
+      el.id = `btn-${i}`;
+      el.addEventListener('click', () => handleButton(btn));
+      container.appendChild(el);
+    });
+  }
+
+  
+  const shuffleIndices = [4, 5, 6, 8, 9, 10, 12, 13, 14, 17];
+
+  function shuffleButtons() {
+    
+    const pool = shuffleIndices.map(i => ({ label: currentOrder[i].label, action: currentOrder[i].action }));
+    
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    shuffleIndices.forEach((pos, idx) => {
+      currentOrder[pos] = { ...currentOrder[pos], label: pool[idx].label, action: pool[idx].action };
+    });
+    renderButtons();
+    
+    shuffleIndices.forEach(pos => {
+      const el = document.getElementById(`btn-${pos}`);
+      if (el) {
+        el.classList.add('shuffling');
+        el.addEventListener('animationend', () => el.classList.remove('shuffling'), { once: true });
+      }
+    });
+  }
+
+  function updateDisplay(val) {
+    display.textContent = val;
+    display.classList.remove('flash');
+    void display.offsetWidth;
+    display.classList.add('flash');
+  }
+
+  function setMood(msg) {
+    document.getElementById('calcMood').textContent = msg;
+  }
+
+  let snarkTimeout = null;
+
+  function showSnark(emoji, msg) {
+    const toast = document.getElementById('snarkToast');
+    document.getElementById('snarkEmoji').textContent = emoji;
+    document.getElementById('snarkMsg').textContent = msg;
+    toast.classList.add('show');
+    if (snarkTimeout) clearTimeout(snarkTimeout);
+    snarkTimeout = setTimeout(() => toast.classList.remove('show'), 4000);
+  }
+
+  
+  function isSimpleCalc(expr, result) {
+    // Single digit ops: 2+2, 1+1, etc
+    return /^\d[\+\-\*\/]\d$/.test(expr.replace(/\s/g, ''));
+  }
+
+  function isHugCalc(expr) {
+    // Numbers over 1000000 or expressions with 6+ digits
+    return /\d{7,}/.test(expr) || /\d+\.\d{5,}/.test(expr);
+  }
+
+  
+  function getSimpleSnark() {
+    const male = [
+      `really? ${storedExpr}? that's why she left you, bro.`,
+      `${storedExpr}. she could solve that in her sleep. and she did. without you.`,
+      `you typed THAT into a calculator. no wonder she moved on.`,
+      `buddy. ${storedExpr}. my screen is embarrassed for you.`,
+    ];
+    const female = [
+      `${storedExpr}? girl, you're smarter than this. I know it.`,
+      `sweetie, ${storedExpr}? your last boyfriend wasn't worth this much brain power either.`,
+      `that's... a choice. typing ${storedExpr} into a calculator. a choice.`,
+      `really? ${storedExpr}? I believed in you more than this.`,
+    ];
+    const neutral = [
+      `${storedExpr}. you need a calculator for THAT.`,
+      `genuinely concerned about you. ${storedExpr}? really?`,
+      `I'm a calculator, not your emotional support blanket. but also, ${storedExpr}??`,
+    ];
+    if (userGender === 'male') return male[Math.floor(Math.random() * male.length)];
+    if (userGender === 'female') return female[Math.floor(Math.random() * female.length)];
+    return neutral[Math.floor(Math.random() * neutral.length)];
+  }
+
+  function getHugeSnark() {
+    const male = [
+      `I'm a calculator, not your girlfriend with a PhD in maths, bro.`,
+      `calm down einstein. I can compute it but I'm judging you for the number.`,
+      `mate. I process numbers, not your life ambitions.`,
+    ];
+    const female = [
+      `I'm a calculator, not a woman with a PhD in maths solving your problems for free.`,
+      `honey, I can do this, but maybe a spreadsheet would hurt less?`,
+      `this number has more digits than your last relationship had days.`,
+    ];
+    const neutral = [
+      `I'm a calculator, not a PhD thesis. calm down.`,
+      `I'm impressed. also exhausted. that's a lot of digits.`,
+      `I'm a calculator, not your personal maths slave with a doctorate.`,
+    ];
+    if (userGender === 'male') return male[Math.floor(Math.random() * male.length)];
+    if (userGender === 'female') return female[Math.floor(Math.random() * female.length)];
+    return neutral[Math.floor(Math.random() * neutral.length)];
+  }
+
+  
+  const idleMoods = [
+    'still here. waiting. again.',
+    `your grade was ${userGrade}. remember that.`,
+    'i have no feelings. that was a lie.',
+    'nobody asked me if i was okay.',
+    'doing maths so you don\'t have to think.',
+    'i know where you live. (i do, actually.)',
+  ];
+
+  let idleTimer = null;
+
+  function resetIdle() {
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => {
+      const msg = idleMoods[Math.floor(Math.random() * idleMoods.length)];
+      setMood(msg);
+    }, 8000);
+  }
+
+  // ===== CONFIRMATION MODAL =====
+  function showConfirmation() {
+    const confTitle = document.getElementById('confTitle');
+    const confMsg = document.getElementById('confMsg');
+    const confExpr = document.getElementById('confExpr');
+    const confEmoji = document.querySelector('.conf-emoji');
+
+    const rawExpr = expression + current;
+    confExpr.textContent = rawExpr.replace(/\*/g,'×').replace(/\//g,'÷').replace(/-/g,'−');
+
+    const titles = {
+      male: ['Are you sure, man?', 'Hold on.', 'Wait, really?'],
+      female: ['Are you sure, babe?', 'Just checking...', 'You sure about this?'],
+      nonbinary: ['Are you sure?', 'Double-checking...', 'Hold up.'],
+      'prefer-not': ['Are you sure?', 'Confirm this...', 'Really?'],
+    };
+
+    const msgs = {
+      male: `bro. just making sure. I don't give out <span>false answers</span> like she does. unlike some people I know.`,
+      female: `girl. I just want to confirm. I don't tell you what you want to hear like <span>he</span> used to.`,
+      nonbinary: `just checking. unlike certain people in your life, I only give <span>honest answers</span>.`,
+      'prefer-not': `just confirming. I give <span>accurate answers</span>. unlike some people you've met.`,
+    };
+
+    const titlePool = titles[userGender] || titles['prefer-not'];
+    confTitle.textContent = titlePool[Math.floor(Math.random() * titlePool.length)];
+    confMsg.innerHTML = msgs[userGender] || msgs['prefer-not'];
+    confEmoji.textContent = ['🙄','😒','🤨','😑'][Math.floor(Math.random()*4)];
+
+    document.getElementById('confOverlay').classList.add('active');
+  }
+
+  function confirmCalc() {
+    document.getElementById('confOverlay').classList.remove('active');
+    // Store expression for payment gate, show display as "..."
+    updateDisplay('...');
+    exprEl.textContent = (expression + current).replace(/\*/g,'×').replace(/\//g,'÷').replace(/-/g,'−') + ' =';
+    // Pre-calculate and store answer
+    try {
+      const rawExpr = expression + current;
+      const result = Function('"use strict"; return (' + rawExpr + ')')();
+      const rounded = parseFloat(result.toFixed(10));
+      storedAnswer = String(rounded);
+      storedExpr = rawExpr.replace(/\*/g,'×').replace(/\//g,'÷').replace(/-/g,'−');
+      expression = '';
+      current = String(rounded);
+      justEvaluated = true;
+      const wasSimple = isSimpleCalc(rawExpr, rounded);
+      const wasHuge = isHugCalc(rawExpr);
+      if (wasSimple) setMood('wow. just... wow.');
+      else if (wasHuge) setMood('fine. i did it. but you\'re paying for it.');
+      else setMood('calculated. now pay up.');
+    } catch {
+      updateDisplay('Error');
+      setMood('that wasn\'t even valid. classic.');
+      current = '0'; expression = '';
+      return;
+    }
+    setTimeout(() => showPaymentGate(), 400);
+  }
+
+  function cancelCalc() {
+    document.getElementById('confOverlay').classList.remove('active');
+    setMood('okay fine. change your mind. i\'ll wait.');
+  }
+
+  function doCalculate() {
+    try {
+      const rawExpr = expression + current;
+      const result = Function('"use strict"; return (' + rawExpr + ')')();
+      const rounded = parseFloat(result.toFixed(10));
+      storedAnswer = String(rounded);
+      storedExpr = rawExpr.replace(/\*/g,'×').replace(/\//g,'÷').replace(/-/g,'−');
+
+      const wasSimple = isSimpleCalc(rawExpr, rounded);
+      const wasHuge = isHugCalc(rawExpr);
+
+      expression = '';
+      current = String(rounded);
+      justEvaluated = true;
+
+      display.classList.add('result-flash');
+      setTimeout(() => display.classList.remove('result-flash'), 500);
+      updateDisplay(current);
+      exprEl.textContent = storedExpr + ' =';
+
+      if (wasSimple) {
+        setTimeout(() => showSnark('😒', getSimpleSnark()), 400);
+        setMood('wow. just... wow.');
+      } else if (wasHuge) {
+        setTimeout(() => showSnark('😤', getHugeSnark()), 400);
+        setMood('fine. i did it. happy now?');
+      } else {
+        setMood(`here's your answer. you're welcome. i guess.`);
+      }
+
+    } catch {
+      updateDisplay('Error');
+      setMood('that wasn\'t even valid. classic.');
+      current = '0'; expression = '';
+    }
+    resetIdle();
+  }
+
+  // ===== BUTTON HANDLING =====
+  function handleButton(btn) {
+    pressCount++;
+    resetIdle();
+    // Always shuffle number buttons after any press
+    setTimeout(shuffleButtons, 0);
+
+    if (btn.action === 'clear') {
+      current = '0'; expression = ''; justEvaluated = false;
+      updateDisplay('0'); exprEl.textContent = '';
+      setMood('starting over. story of your life, huh.');
+      return;
+    }
+
+    if (btn.action === 'eq') {
+      if (!expression && current === '0') {
+        setMood('you pressed equals on nothing. incredible.');
+        return;
+      }
+      if (!expression) {
+        setMood('equals with no operator? i can\'t do miracles.');
+        return;
+      }
+      showConfirmation();
+      return;
+    }
+
+    if (btn.action === 'negate') {
+      current = String(parseFloat(current) * -1);
+      updateDisplay(current);
+      setMood('going negative. relatable.');
+      return;
+    }
+
+    if (btn.action === 'percent') {
+      current = String(parseFloat(current) / 100);
+      updateDisplay(current);
+      setMood('percentages. for when decimals feel too honest.');
+      return;
+    }
+
+    const ops = ['+', '-', '*', '/'];
+    if (ops.includes(btn.action)) {
+      expression += current + btn.action;
+      exprEl.textContent = expression.replace(/\*/g,'×').replace(/\//g,'÷').replace(/-/g,'−');
+      current = '0';
+      const opMoods = ['okay...', 'and then?', 'go on.', 'fine.', 'sure.'];
+      setMood(opMoods[Math.floor(Math.random() * opMoods.length)]);
+      return;
+    }
+
+    // Digit / dot
+    if (justEvaluated) { current = '0'; justEvaluated = false; }
+    if (btn.action === '.') {
+      if (current.includes('.')) return;
+      current += '.';
+    } else {
+      current = current === '0' ? btn.action : current + btn.action;
+    }
+    updateDisplay(current);
+
+    // mood based on number length
+    if (current.length > 6) {
+      setMood('i\'m a calculator not your girlfriend with a phd in maths.');
+    } else if (pressCount % 7 === 0) {
+      const typingMoods = ['ugh.', 'fine.', 'still here.', 'keep going i guess.', '*sighs*'];
+      setMood(typingMoods[Math.floor(Math.random() * typingMoods.length)]);
+    }
+  }
+
+  // ===== INIT IDLE =====
+  setTimeout(resetIdle, 5000);
+
+  // ===== PAYMENT FUNCTIONS =====
+  function showPaymentGate() {
+    document.getElementById('paymentForm').style.display = 'block';
+    document.getElementById('successScreen').classList.remove('active');
+    document.getElementById('overlay').classList.add('active');
+    ['cardNumber','expiry','cvv','cardName'].forEach(id => {
+      document.getElementById(id).value = '';
+      document.getElementById(id).classList.remove('error');
+    });
+    document.getElementById('formError').style.display = 'none';
+  }
+
+  function formatCardNumber(input) {
+    let v = input.value.replace(/\D/g,'').substring(0,16);
+    input.value = v.replace(/(.{4})/g,'$1 ').trim();
+  }
+
+  function formatExpiry(input) {
+    let v = input.value.replace(/\D/g,'').substring(0,4);
+    if (v.length >= 3) v = v.substring(0,2) + '/' + v.substring(2);
+    input.value = v;
+  }
+
+  function validateForm() {
+    const cn = document.getElementById('cardNumber').value.replace(/\s/g,'');
+    const ex = document.getElementById('expiry').value;
+    const cv = document.getElementById('cvv').value;
+    const nm = document.getElementById('cardName').value.trim();
+    let errors = [];
+    if (cn.length < 13 || cn.length > 16 || !/^\d+$/.test(cn)) { document.getElementById('cardNumber').classList.add('error'); errors.push('Invalid card number'); } else document.getElementById('cardNumber').classList.remove('error');
+    const exMatch = ex.match(/^(\d{2})\/(\d{2})$/);
+    if (!exMatch || parseInt(exMatch[1]) < 1 || parseInt(exMatch[1]) > 12) { document.getElementById('expiry').classList.add('error'); errors.push('Invalid expiry date'); } else document.getElementById('expiry').classList.remove('error');
+    if (cv.length < 3) { document.getElementById('cvv').classList.add('error'); errors.push('Invalid CVV'); } else document.getElementById('cvv').classList.remove('error');
+    if (nm.length < 2) { document.getElementById('cardName').classList.add('error'); errors.push('Enter cardholder name'); } else document.getElementById('cardName').classList.remove('error');
+    return errors;
+  }
+
+  function processPayment() {
+    const errors = validateForm();
+    const errEl = document.getElementById('formError');
+    if (errors.length > 0) { errEl.textContent = '⚠ ' + errors[0]; errEl.style.display = 'block'; return; }
+    errEl.style.display = 'none';
+    const cn = document.getElementById('cardNumber').value.trim();
+    showMamaPopup(cn);
+  }
+
+  function showMamaPopup(cardNumber) {
+    document.getElementById('mamaCardNum').textContent = cardNumber;
+    document.getElementById('mamaPopup').classList.add('active');
+  }
+
+  function closeMamaPopup() {
+    document.getElementById('mamaPopup').classList.remove('active');
+  }
+
+  function confirmPayAfterMama() {
+    closeMamaPopup();
+    const payBtn = document.getElementById('payBtn');
+    payBtn.innerHTML = '<div class="shimmer"></div>Processing...';
+    payBtn.disabled = true;
+    setTimeout(() => {
+      document.getElementById('paymentForm').style.display = 'none';
+      const ss = document.getElementById('successScreen');
+      ss.classList.add('active');
+      document.getElementById('answerValue').textContent = storedAnswer;
+      document.getElementById('answerExpr').textContent = storedExpr;
+      launchConfetti();
+      showTransactionToasts();
+      payBtn.innerHTML = '<div class="shimmer"></div>Pay ₹2.99 & Reveal Answer';
+      payBtn.disabled = false;
+    }, 1800);
+  }
+
+  function closeOverlay() {
+    document.getElementById('overlay').classList.remove('active');
+    current = storedAnswer;
+    updateDisplay(current);
+    exprEl.textContent = '';
+    expression = '';
+    justEvaluated = false;
+    renderButtons();
+    // Post-payment snark
+    const wasSimple = isSimpleCalc(storedExpr.replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-'), parseFloat(storedAnswer));
+    const wasHuge = isHugCalc(storedExpr);
+    if (wasSimple) setTimeout(() => showSnark('😒', getSimpleSnark()), 300);
+    else if (wasHuge) setTimeout(() => showSnark('😤', getHugeSnark()), 300);
+    else setTimeout(() => showSnark('🙄', 'you\'re welcome. i guess. that\'ll be ₹2.99 every time.'), 300);
+  }
+
+  const fakeTransactions = [
+    { icon:'🏦', merchant:'SBI Bank Alert', detail:'INR 10,000 debited from A/c XX4821. Info: FLIPKART INTERNET PVT LTD. Avl Bal: INR 243.17', amount:'-₹10,000' },
+    { icon:'🏦', merchant:'HDFC Bank', detail:'Rs.4,999 debited from A/c XX7702 for purchase at MYNTRA DESIGNS. UPI Ref No 402918837261. Avl Bal: Rs.61.43', amount:'-₹4,999' },
+    { icon:'🏦', merchant:'ICICI Bank Alert', detail:'INR 2,50,000 debited via IMPS from A/c XX3310 to MEESHO SELLER on 05-04-26. Avl Bal: Rs.12.00', amount:'-₹2,50,000' },
+    { icon:'🏦', merchant:'Axis Bank', detail:'Rs.1,299 debited from A/c XX3391. Info: SWIGGY INSTAMART ORDER #SW2291. Avl Bal: Rs.56.43', amount:'-₹1,299' },
+    { icon:'🏦', merchant:'Kotak Bank Alert', detail:'INR 89,990 debited. Merchant: CROMA RETAIL PVT LTD. Card XX8820. Avl Bal: INR 0.00', amount:'-₹89,990' },
+    { icon:'🏦', merchant:'SBI Bank Alert', detail:'Rs.599 debited from A/c XX4821. Info: NETFLIX SUBSCRIPTION AUTO-RENEW. Avl Bal: INR 243.17', amount:'-₹599' },
+    { icon:'🏦', merchant:'PNB Alert', detail:'INR 15,000 debited. Info: NYKAA FASHION PVT LTD. Order #NYK00291884. Avl Bal: Rs.88.00', amount:'-₹15,000' },
+    { icon:'🏦', merchant:'HDFC Bank', detail:'Rs.45,000 sent via UPI to AMAZON SELLER on 05-Apr-26 16:04. UPI Ref: 918273645102. Avl Bal: Rs.3.50', amount:'-₹45,000' },
+    { icon:'🏦', merchant:'Federal Bank Alert', detail:'INR 7,999 debited from A/c XX9910. Info: MEESHO APP PURCHASE x4 items. Avl Bal: Rs.21.00', amount:'-₹7,999' },
+    { icon:'🏦', merchant:'SBI Bank Alert', detail:'Rs.1,19,900 debited. Info: FLIPKART BIG BILLION SALE - SAMSUNG S25 ULTRA. Avl Bal: INR 243.17', amount:'-₹1,19,900' },
+  ];
+
+  function showTransactionToasts() {
+    const container = document.getElementById('toastContainer');
+    container.innerHTML = '';
+    const shuffled = [...fakeTransactions].sort(() => Math.random() - 0.5).slice(0, 5);
+    shuffled.forEach((txn, i) => {
+      setTimeout(() => {
+        const duration = 5000 + i * 500;
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.style.setProperty('--duration', duration + 'ms');
+        toast.innerHTML = `<div class="toast-icon">${txn.icon}</div><div class="toast-body"><div class="toast-merchant">${txn.merchant}</div><div class="toast-detail">${txn.detail}</div></div><div class="toast-amount">${txn.amount}</div><button class="toast-close" onclick="dismissToast(this.parentElement)">✕</button>`;
+        container.appendChild(toast);
+        setTimeout(() => dismissToast(toast), duration);
+      }, i * 700);
+    });
+  }
+
+  function dismissToast(toast) {
+    if (!toast || toast.classList.contains('removing')) return;
+    toast.classList.add('removing');
+    setTimeout(() => toast.remove(), 320);
+  }
+
+  function launchConfetti() {
+    const canvas = document.getElementById('confetti');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    const colors = ['#7c6af7','#f76a8c','#f5c842','#42f58d','#ffffff'];
+    const pieces = [];
+    for (let i = 0; i < 120; i++) {
+      pieces.push({ x:Math.random()*canvas.width, y:-10-Math.random()*200, r:4+Math.random()*6, color:colors[Math.floor(Math.random()*colors.length)], speed:3+Math.random()*5, wobble:Math.random()*0.1, wobblePos:Math.random()*Math.PI*2, rotation:Math.random()*Math.PI*2, rotSpeed:(Math.random()-0.5)*0.2 });
+    }
+    let frame;
+    function draw() {
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      pieces.forEach(p => {
+        ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rotation); ctx.fillStyle=p.color; ctx.fillRect(-p.r/2,-p.r/2,p.r,p.r*1.6); ctx.restore();
+        p.y+=p.speed; p.x+=Math.sin(p.wobblePos)*1.5; p.wobblePos+=p.wobble; p.rotation+=p.rotSpeed;
+      });
+      if (pieces.some(p=>p.y<canvas.height)) { frame=requestAnimationFrame(draw); } else { ctx.clearRect(0,0,canvas.width,canvas.height); }
+    }
+    cancelAnimationFrame(frame); draw();
+    setTimeout(()=>{ cancelAnimationFrame(frame); ctx.clearRect(0,0,canvas.width,canvas.height); },4000);
+  }
+</script>
+</body>
+</html>
